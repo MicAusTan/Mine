@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Minesweeper</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="window" class="raised">
+  <div id="titlebar">💣 Minesweeper</div>
+
+  <div id="menu">
+    <label>Shape <select id="shape"></select></label>
+    <label>Difficulty
+      <select id="diff">
+        <option value="easy">Easy</option>
+        <option value="medium" selected>Medium</option>
+        <option value="hard">Hard</option>
+        <option value="custom">Custom</option>
+      </select>
+    </label>
+    <span id="custom" hidden>
+      <label><span id="cwlabel">Width</span> <input id="cw" type="number" min="5" max="60"></label>
+      <label id="chwrap">Height <input id="ch" type="number" min="5" max="40"></label>
+      <label>Mines <input id="cm" type="number" min="1"></label>
+    </span>
+  </div>
+
+  <div id="game" class="raised">
+    <div id="bar" class="sunken">
+      <div id="mines" class="led sunken">000</div>
+      <button id="face" class="raised" title="New game (new seed)">😊</button>
+      <div id="time" class="led sunken">000</div>
+    </div>
+    <div id="wrap"><div id="board" class="sunken"></div></div>
+  </div>
+
+  <div id="seedbar">
+    <label>Board code <input id="code" spellcheck="false"></label>
+    <button id="load" class="raised">Load</button>
+    <button id="copy" class="raised">Copy</button>
+    <button id="restart" class="raised" title="Same board, start over">Restart</button>
+    <button id="undo" class="raised" title="Ctrl+Z">Undo flags</button>
+  </div>
+  <div id="help">
+    Left-click: reveal · Right-click: flag · Click a number or middle-click: chord ·
+    <b>Hold Shift</b> and hover to flag / unflag · Ctrl+Z: undo flags
+  </div>
+</div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
