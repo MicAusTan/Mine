@@ -2,6 +2,7 @@ import { Game, Status } from './engine.js';
 import { SHAPES, buildLayout, gridSizeFor } from './shapes.js';
 import { Renderer } from './render.js';
 import { randomSeed } from './rng.js';
+import { recordWin, getStats, exportJSON, importJSON, resetStats } from './stats.js';
 
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -14,6 +15,7 @@ const DENSITY = { easy: 10 / 81, medium: 40 / 256, hard: 99 / 480 };
 const board = $('board'), face = $('face');
 const renderer = new Renderer(board);
 let game, cfg, timerId = null, seconds = 0;
+let ranked = false, finished = false, startedAt = 0;
 let shiftHeld = false, touched = new Set(), hover = -1;
 
 // ---------- setup / config ----------
@@ -38,7 +40,13 @@ function syncUI() {
   $('cwlabel').textContent = rect ? 'Width' : 'Size';
 }
 
-function startGame(c, seed = randomSeed()) {
+function startGame(c, seed) {
+  // Only brand-new random boards on a preset difficulty count towards records.
+  const fresh = seed === undefined;
+  seed ??= randomSeed();
+  ranked = fresh && c.diff !== 'custom';
+  finished = false; startedAt = 0;
+  $('msg').textContent = '';
   stopTimer(); seconds = 0;
   const layout = buildLayout(c.shape, c.w, c.h);
   const dens = DENSITY[c.diff] ?? DENSITY.medium;
@@ -59,15 +67,30 @@ function hud() { $('mines').textContent = pad(game.mineCount - game.flags); $('t
 function setFace() { face.textContent = { [Status.WON]: '😎', [Status.LOST]: '😵' }[game.status] || '😊'; }
 function startTimer() {
   seconds = 1; hud();
-  const t0 = Date.now();
+  const t0 = startedAt;
   timerId = setInterval(() => { seconds = Math.min(999, 1 + Math.floor((Date.now() - t0) / 1000)); hud(); }, 200);
 }
 function stopTimer() { clearInterval(timerId); timerId = null; }
 
+const fmt = ms => (ms / 1000).toFixed(2) + 's';
+
+function onWin() {
+  finished = true;
+  const ms = Date.now() - startedAt;
+  let text = `Cleared in ${fmt(ms)}`;
+  if (ranked) {
+    const r = recordWin(`${cfg.shape}:${cfg.diff}`, ms);
+    text += r.isBest ? ' - new best!' : ` - best: ${fmt(r.best)}`;
+  } else text += ' (practice board, not recorded)';
+  $('msg').textContent = text;
+}
+
 function afterAction(changed) {
   renderer.update(game, changed);
+  if (game.status !== Status.READY && !startedAt) startedAt = Date.now();
   if (game.status === Status.PLAYING && !timerId) startTimer();
   if (game.over) stopTimer();
+  if (game.status === Status.WON && !finished) onWin();
   setFace(); hud();
 }
 
@@ -163,6 +186,34 @@ $('diff').onchange = () => {
   syncUI(); startGame(readConfig());
 };
 for (const id of ['cw', 'ch', 'cm']) $(id).onchange = () => startGame(readConfig());
+
+// ---------- stats dialog ----------
+function renderStats() {
+  const d = getStats();
+  const rows = Object.entries(d.records).filter(([, r]) => r.wins > 0);
+  const total = rows.reduce((a, [, r]) => a + r.wins, 0);
+  let html = `<p>Boards cleared: <b>${total}</b></p>`;
+  if (!rows.length) html += '<p>Nothing here yet. Clear a board to get started!</p>';
+  else html += '<table><tr><th>Board</th><th>Best</th><th>Last</th><th>Cleared</th></tr>' +
+    rows.map(([k, r]) => {
+      const [s, df] = k.split(':');
+      return `<tr><td>${SHAPES[s]?.label ?? s} · ${df}</td><td>${fmt(r.best)}</td><td>${fmt(r.last)}</td><td>${r.wins}</td></tr>`;
+    }).join('') + '</table>';
+  $('statsBody').innerHTML = html;
+}
+$('statsBtn').onclick = () => { renderStats(); $('stats').showModal(); };
+$('sClose').onclick = () => $('stats').close();
+$('sExport').onclick = async () => {
+  const t = exportJSON();
+  try { await navigator.clipboard.writeText(t); alert('Stats copied to your clipboard.'); }
+  catch { prompt('Copy your stats:', t); }
+};
+$('sImport').onclick = () => {
+  const t = prompt('Paste exported stats (this replaces your current ones):');
+  if (!t) return;
+  try { importJSON(t); renderStats(); } catch { alert("That doesn't look like valid stats."); }
+};
+$('sReset').onclick = () => { if (confirm('Erase all saved stats?')) { resetStats(); renderStats(); } };
 
 syncUI();
 startGame(readConfig());

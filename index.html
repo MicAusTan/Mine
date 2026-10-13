@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Minesweeper</title>
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="window" class="raised">
@@ -36,18 +36,29 @@
     <div id="wrap"><div id="board" class="sunken"></div></div>
   </div>
 
+  <div id="msg"></div>
+
   <div id="seedbar">
     <label>Board code <input id="code" spellcheck="false"></label>
     <button id="load" class="raised">Load</button>
     <button id="copy" class="raised">Copy</button>
     <button id="restart" class="raised" title="Same board, start over">Restart</button>
     <button id="undo" class="raised" title="Ctrl+Z">Undo flags</button>
+    <button id="statsBtn" class="raised">Stats</button>
   </div>
   <div id="help">
     Left-click: reveal · Right-click: flag · Click a number or middle-click: chord ·
     <b>Hold Shift</b> and hover to flag / unflag · Ctrl+Z: undo flags
   </div>
 </div>
-<script type="module" src="js/main.js"></script>
+<dialog id="stats">
+  <h3>Your stats</h3>
+  <div id="statsBody"></div>
+  <div class="row">
+    <button id="sExport">Export</button><button id="sImport">Import</button>
+    <button id="sReset">Reset</button><button id="sClose">Close</button>
+  </div>
+</dialog>
+<script type="module" src="main.js"></script>
 </body>
 </html>
