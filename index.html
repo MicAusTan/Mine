@@ -12,6 +12,7 @@
 
   <div id="menu">
     <label>Shape <select id="shape"></select></label>
+    <label>Tiles <select id="tiles"><option value="square">Square tiles</option><option value="shape">Shape tiles</option></select></label>
     <label>Difficulty
       <select id="diff">
         <option value="easy">Easy</option>
@@ -20,11 +21,14 @@
         <option value="custom">Custom</option>
       </select>
     </label>
+    <label>Mode <select id="mode"><option value="classic">Classic</option><option value="ng">No-guess</option></select></label>
     <span id="custom" hidden>
       <label><span id="cwlabel">Width</span> <input id="cw" type="number" min="5" max="60"></label>
       <label id="chwrap">Height <input id="ch" type="number" min="5" max="40"></label>
       <label>Mines <input id="cm" type="number" min="1"></label>
     </span>
+    <label>Theme <select id="theme"></select></label>
+    <button id="themeEdit" class="raised">Edit theme</button>
   </div>
 
   <div id="game" class="raised">
@@ -44,13 +48,15 @@
     <button id="copy" class="raised">Copy</button>
     <button id="restart" class="raised" title="Same board, start over">Restart</button>
     <button id="undo" class="raised" title="Ctrl+Z">Undo flags</button>
+    <button id="zoomReset" class="raised">Reset zoom</button>
     <button id="statsBtn" class="raised">Stats</button>
   </div>
   <div id="help">
     Left-click: reveal · Right-click: flag · Click a number or middle-click: chord ·
-    <b>Hold Shift</b> and hover to flag / unflag · Ctrl+Z: undo flags
+    <b>Hold Shift</b> and hover to flag / unflag · Ctrl+Z: undo flags · <b>Scroll</b> over the board to zoom
   </div>
 </div>
+
 <dialog id="stats">
   <h3>Your stats</h3>
   <div id="statsBody"></div>
@@ -59,6 +65,25 @@
     <button id="sReset">Reset</button><button id="sClose">Close</button>
   </div>
 </dialog>
+
+<dialog id="themeDlg">
+  <h3>Theme editor</h3>
+  <label>Name <input id="tName" maxlength="30"></label>
+  <div id="themeFields"></div>
+  <div class="trow">
+    <label>Bevel <input id="tBevel" type="number" min="1" max="4"></label>
+    <label>Tile size <input id="tCell" type="number" min="18" max="40"></label>
+    <label>Roundness <input id="tRadius" type="number" min="0" max="12"></label>
+    <label>Flag <input id="tFlag" size="3"></label>
+    <label>Mine <input id="tMine" size="3"></label>
+  </div>
+  <div class="row">
+    <button id="tExport">Export</button><button id="tImport">Import</button>
+    <button id="tDelete">Delete</button><button id="tSaveNew">Save as new</button>
+    <button id="tSave">Save</button><button id="tClose">Close</button>
+  </div>
+</dialog>
+
 <script type="module" src="main.js"></script>
 </body>
 </html>

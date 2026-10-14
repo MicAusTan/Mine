@@ -1,7 +1,7 @@
 // Local stats saved in the browser (localStorage). Only tracks things that go up:
 // best time, last time, boards cleared. No win ratio.
 const KEY = 'minesweeper-stats-v1';
-const KEY_RE = /^[a-z]+:(easy|medium|hard)$/;
+const KEY_RE = /^[a-z]+(~t)?:(easy|medium|hard)(:ng)?$/;
 
 export function getStats() {
   try {

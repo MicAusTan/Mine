@@ -1,14 +1,20 @@
 // Pure game logic. No DOM, no shapes: it only knows cells and their neighbours.
 import { seededRng } from './rng.js';
+import { isSolvable } from './solver.js';
+
+export const NG_ATTEMPTS = 1500; // how many boards No-guess mode will try before giving up
 
 export const Status = { READY: 'ready', PLAYING: 'playing', WON: 'won', LOST: 'lost' };
 
 export class Game {
-  constructor(layout, mineCount, seed) {
+  constructor(layout, mineCount, seed, opts = {}) {
     this.nbrs = layout.neighbors;
     this.n = layout.cells.length;
     this.mineCount = Math.max(1, Math.min(mineCount, this.n - 1));
     this.seed = seed;
+    this.noGuess = !!opts.noGuess;
+    this.ngFailed = false;
+    this.ngAttempts = 0;
     this.status = Status.READY;
     this.mine = new Uint8Array(this.n);
     this.adj = new Uint8Array(this.n);
@@ -20,22 +26,25 @@ export class Game {
     this.undoStack = [];
     this._group = null;
 
-    // Seeded shuffle decides mine order; first click only moves mines out of its way.
-    const rng = seededRng(seed);
-    this.order = Array.from({ length: this.n }, (_, i) => i);
+    this.order = this._shuffled(''); // classic mine order (seeded)
+  }
+
+  _shuffled(tag) {
+    const rng = seededRng(this.seed + tag);
+    const o = Array.from({ length: this.n }, (_, i) => i);
     for (let i = this.n - 1; i > 0; i--) {
       const j = Math.floor(rng() * (i + 1));
-      [this.order[i], this.order[j]] = [this.order[j], this.order[i]];
+      [o[i], o[j]] = [o[j], o[i]];
     }
+    return o;
   }
 
   get over() { return this.status === Status.WON || this.status === Status.LOST; }
 
-  _place(first) {
-    let safe = new Set([first, ...this.nbrs[first]]);
-    if (this.n - safe.size < this.mineCount) safe = new Set([first]);
+  _fill(order, safe) {
+    this.mine.fill(0);
     let placed = 0;
-    for (const i of this.order) {
+    for (const i of order) {
       if (placed >= this.mineCount) break;
       if (safe.has(i)) continue;
       this.mine[i] = 1; placed++;
@@ -45,6 +54,19 @@ export class Game {
       for (const k of this.nbrs[i]) c += this.mine[k];
       this.adj[i] = c;
     }
+  }
+
+  _place(first) {
+    let safe = new Set([first, ...this.nbrs[first]]);
+    if (this.n - safe.size < this.mineCount) safe = new Set([first]);
+    if (!this.noGuess) return this._fill(this.order, safe);
+    // No-guess: try deterministic variations of the seed until the solver can finish the board.
+    for (let a = 0; a < NG_ATTEMPTS; a++) {
+      this._fill(this._shuffled('#' + a), safe);
+      if (isSolvable(this.nbrs, this.mine, this.adj, first)) { this.ngAttempts = a + 1; return; }
+    }
+    this.ngFailed = true; // gave up: fall back to a normal board
+    this._fill(this.order, safe);
   }
 
   _open(start, changed) {
